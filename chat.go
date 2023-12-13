@@ -12,6 +12,7 @@ import (
 const (
 	RoleUser      = "user"
 	RoleAssistant = "assistant"
+	RoleSystem    = "system"
 )
 
 type FinishReason string
