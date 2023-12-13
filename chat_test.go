@@ -2,13 +2,12 @@ package mistral
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestChat(t *testing.T) {
-	client := NewMistralClient("", "", 3, time.Second*10)
+	client := NewMistralClientDefault("")
 	params := DefaultChatRequestParams
 	params.MaxTokens = 10
 	params.Temperature = 0
@@ -32,7 +31,7 @@ func TestChat(t *testing.T) {
 }
 
 func TestChatStream(t *testing.T) {
-	client := NewMistralClient("", "", 3, time.Second*10)
+	client := NewMistralClientDefault("")
 	params := DefaultChatRequestParams
 	params.MaxTokens = 50
 	params.Temperature = 0

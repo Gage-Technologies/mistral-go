@@ -54,6 +54,14 @@ func NewMistralClient(apiKey string, endpoint string, maxRetries int, timeout ti
 	}
 }
 
+func NewMistralClientDefault(apiKey string) *MistralClient {
+	if apiKey == "" {
+		apiKey = os.Getenv("MISTRAL_API_KEY")
+	}
+
+	return NewMistralClient(apiKey, Endpoint, DefaultMaxRetries, DefaultTimeout)
+}
+
 func (c *MistralClient) request(method string, jsonData map[string]interface{}, path string, stream bool, params map[string]string) (interface{}, error) {
 	uri, err := url.Parse(c.endpoint)
 	if err != nil {
