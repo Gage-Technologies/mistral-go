@@ -27,7 +27,6 @@ type ChatRequestParams struct {
 	Temperature float64 `json:"temperature"` // The temperature to use for sampling. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or TopP but not both.
 	TopP        float64 `json:"top_p"`       // An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or Temperature but not both.
 	RandomSeed  int     `json:"random_seed"`
-	SafeMode    bool    `json:"safe_mode"`
 	MaxTokens   int     `json:"max_tokens"`
 }
 
@@ -35,7 +34,6 @@ var DefaultChatRequestParams = ChatRequestParams{
 	Temperature: 1,
 	TopP:        1,
 	RandomSeed:  42069,
-	SafeMode:    false,
 	MaxTokens:   4000,
 }
 
@@ -99,7 +97,6 @@ func (c *MistralClient) Chat(model string, messages []ChatMessage, params *ChatR
 		"max_tokens":  params.MaxTokens,
 		"top_p":       params.TopP,
 		"random_seed": params.RandomSeed,
-		"safe_mode":   params.SafeMode,
 	}
 
 	response, err := c.request(http.MethodPost, requestData, "v1/chat/completions", false, nil)
@@ -136,7 +133,6 @@ func (c *MistralClient) ChatStream(model string, messages []ChatMessage, params 
 		"max_tokens":  params.MaxTokens,
 		"top_p":       params.TopP,
 		"random_seed": params.RandomSeed,
-		"safe_mode":   params.SafeMode,
 		"stream":      true,
 	}
 
