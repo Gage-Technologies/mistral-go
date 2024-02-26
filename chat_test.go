@@ -87,6 +87,80 @@ func TestChatFunctionCall(t *testing.T) {
 	assert.Equal(t, res.Choices[0].Message.ToolCalls[0].Function.Arguments, "{\"city\": \"Dallas\", \"state\": \"TX\"}")
 }
 
+func TestChatFunctionCall2(t *testing.T) {
+	client := NewMistralClientDefault("")
+	params := DefaultChatRequestParams
+	params.Temperature = 0
+	params.Tools = []Tool{
+		{
+			Type: ToolTypeFunction,
+			Function: Function{
+				Name:        "get_weather",
+				Description: "Retrieve the weather for a city in the US",
+				Parameters: map[string]interface{}{
+					"type":     "object",
+					"required": []string{"city", "state"},
+					"properties": map[string]interface{}{
+						"city":  map[string]interface{}{"type": "string", "description": "Name of the city for the weather"},
+						"state": map[string]interface{}{"type": "string", "description": "Name of the state for the weather"},
+					},
+				},
+			},
+		},
+		{
+			Type: ToolTypeFunction,
+			Function: Function{
+				Name:        "send_text",
+				Description: "Send text message using SMS service",
+				Parameters: map[string]interface{}{
+					"type":     "object",
+					"required": []string{"contact_name", "message"},
+					"properties": map[string]interface{}{
+						"contact_name": map[string]interface{}{"type": "string", "description": "Name of the contact that will receive the message"},
+						"message":      map[string]interface{}{"type": "string", "description": "Content of the message that will be sent"},
+					},
+				},
+			},
+		},
+	}
+	params.ToolChoice = ToolChoiceAuto
+	res, err := client.Chat(
+		ModelMistralSmallLatest,
+		[]ChatMessage{
+			{
+				Role:    RoleUser,
+				Content: "What's the weather like in Dallas",
+			},
+			{
+				Role: RoleAssistant,
+				ToolCalls: []ToolCall{
+					{
+						Type: ToolTypeFunction,
+						Function: FunctionCall{
+							Name:      "get_weather",
+							Arguments: `{"city": "Dallas", "state": "TX"}`,
+						},
+					},
+				},
+			},
+			{
+				Role:    RoleTool,
+				Name:    "get_weather",
+				Content: `{"temperature": 82, "sky": "clear", "precipitation": 0}`,
+			},
+		},
+		&params,
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+
+	assert.Greater(t, len(res.Choices), 0)
+	assert.Greater(t, len(res.Choices[0].Message.Content), 0)
+	assert.Equal(t, len(res.Choices[0].Message.ToolCalls), 0)
+	assert.Equal(t, res.Choices[0].Message.Role, RoleAssistant)
+	assert.Greater(t, res.Choices[0].Message.Content, "Test Succeeded")
+}
+
 func TestChatJsonMode(t *testing.T) {
 	client := NewMistralClientDefault("")
 	params := DefaultChatRequestParams
