@@ -9,26 +9,16 @@ import (
 	"net/http"
 )
 
-const (
-	RoleUser      = "user"
-	RoleAssistant = "assistant"
-	RoleSystem    = "system"
-)
-
-type FinishReason string
-
-const (
-	FinishReasonStop   FinishReason = "stop"
-	FinishReasonLength FinishReason = "length"
-)
-
 // ChatRequestParams represents the parameters for the Chat/ChatStream method of MistralClient.
 type ChatRequestParams struct {
-	Temperature float64 `json:"temperature"` // The temperature to use for sampling. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or TopP but not both.
-	TopP        float64 `json:"top_p"`       // An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or Temperature but not both.
-	RandomSeed  int     `json:"random_seed"`
-	MaxTokens   int     `json:"max_tokens"`
-	SafePrompt  bool    `json:"safe_prompt"` // Adds a Mistral defined safety message to the system prompt to enforce guardrailing
+	Temperature    float64        `json:"temperature"` // The temperature to use for sampling. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or TopP but not both.
+	TopP           float64        `json:"top_p"`       // An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or Temperature but not both.
+	RandomSeed     int            `json:"random_seed"`
+	MaxTokens      int            `json:"max_tokens"`
+	SafePrompt     bool           `json:"safe_prompt"` // Adds a Mistral defined safety message to the system prompt to enforce guardrailing
+	Tools          []Tool         `json:"tools"`
+	ToolChoice     string         `json:"tool_choice"`
+	ResponseFormat ResponseFormat `json:"response_format"`
 }
 
 var DefaultChatRequestParams = ChatRequestParams{
@@ -37,12 +27,6 @@ var DefaultChatRequestParams = ChatRequestParams{
 	RandomSeed:  42069,
 	MaxTokens:   4000,
 	SafePrompt:  false,
-}
-
-// ChatMessage represents a single message in a chat.
-type ChatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
 }
 
 // ChatCompletionResponseChoice represents a choice in the chat completion response.
@@ -55,7 +39,7 @@ type ChatCompletionResponseChoice struct {
 // ChatCompletionResponseChoice represents a choice in the chat completion response.
 type ChatCompletionResponseChoiceStream struct {
 	Index        int          `json:"index"`
-	Delta        ChatMessage  `json:"delta"`
+	Delta        DeltaMessage `json:"delta"`
 	FinishReason FinishReason `json:"finish_reason,omitempty"`
 }
 
@@ -102,6 +86,16 @@ func (c *MistralClient) Chat(model string, messages []ChatMessage, params *ChatR
 		"safe_prompt": params.SafePrompt,
 	}
 
+	if params.Tools != nil {
+		requestData["tools"] = params.Tools
+	}
+	if params.ToolChoice != "" {
+		requestData["tool_choice"] = params.ToolChoice
+	}
+	if params.ResponseFormat != "" {
+		requestData["response_format"] = map[string]any{"type": params.ResponseFormat}
+	}
+
 	response, err := c.request(http.MethodPost, requestData, "v1/chat/completions", false, nil)
 	if err != nil {
 		return nil, err
@@ -138,6 +132,16 @@ func (c *MistralClient) ChatStream(model string, messages []ChatMessage, params 
 		"random_seed": params.RandomSeed,
 		"safe_prompt": params.SafePrompt,
 		"stream":      true,
+	}
+
+	if params.Tools != nil {
+		requestData["tools"] = params.Tools
+	}
+	if params.ToolChoice != "" {
+		requestData["tool_choice"] = params.ToolChoice
+	}
+	if params.ResponseFormat != "" {
+		requestData["response_format"] = map[string]any{"type": params.ResponseFormat}
 	}
 
 	response, err := c.request(http.MethodPost, requestData, "v1/chat/completions", true, nil)
