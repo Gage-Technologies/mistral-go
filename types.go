@@ -88,6 +88,5 @@ type DeltaMessage struct {
 type ChatMessage struct {
 	Role      string     `json:"role"`
 	Content   string     `json:"content"`
-	Name      string     `json:"name"`
-	ToolCalls []ToolCall `json:"tool_calls"`
+	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
 }

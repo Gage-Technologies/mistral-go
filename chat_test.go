@@ -145,7 +145,6 @@ func TestChatFunctionCall2(t *testing.T) {
 			},
 			{
 				Role:    RoleTool,
-				Name:    "get_weather",
 				Content: `{"temperature": 82, "sky": "clear", "precipitation": 0}`,
 			},
 		},
