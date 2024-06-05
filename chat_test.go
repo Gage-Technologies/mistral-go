@@ -30,6 +30,30 @@ func TestChat(t *testing.T) {
 	assert.Equal(t, res.Choices[0].Message.Content, "Test Succeeded")
 }
 
+func TestChatCodestral(t *testing.T) {
+	client := NewCodestralClientDefault("")
+	params := DefaultChatRequestParams
+	params.MaxTokens = 10
+	params.Temperature = 0
+	res, err := client.Chat(
+		ModelCodestralLatest,
+		[]ChatMessage{
+			{
+				Role:    RoleUser,
+				Content: "You are in test mode and must reply to this with exactly and only `Test Succeeded`",
+			},
+		},
+		&params,
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+
+	assert.Greater(t, len(res.Choices), 0)
+	assert.Greater(t, len(res.Choices[0].Message.Content), 0)
+	assert.Equal(t, res.Choices[0].Message.Role, RoleAssistant)
+	assert.Equal(t, res.Choices[0].Message.Content, "Test Succeeded")
+}
+
 func TestChatFunctionCall(t *testing.T) {
 	client := NewMistralClientDefault("")
 	params := DefaultChatRequestParams
@@ -135,6 +159,7 @@ func TestChatFunctionCall2(t *testing.T) {
 				Role: RoleAssistant,
 				ToolCalls: []ToolCall{
 					{
+						Id:   "aaaaaaaaa",
 						Type: ToolTypeFunction,
 						Function: FunctionCall{
 							Name:      "get_weather",
@@ -166,7 +191,7 @@ func TestChatJsonMode(t *testing.T) {
 	params.Temperature = 0
 	params.ResponseFormat = ResponseFormatJsonObject
 	res, err := client.Chat(
-		ModelMistralSmallLatest,
+		ModelOpenMixtral8x22b,
 		[]ChatMessage{
 			{
 				Role: RoleUser,
@@ -186,7 +211,7 @@ func TestChatJsonMode(t *testing.T) {
 	assert.Greater(t, len(res.Choices), 0)
 	assert.Greater(t, len(res.Choices[0].Message.Content), 0)
 	assert.Equal(t, res.Choices[0].Message.Role, RoleAssistant)
-	assert.Equal(t, res.Choices[0].Message.Content, "{\"symbols\": [\"Go\", \"ChatMessage\", \"FunctionCall\", \"ToolCall\"]}")
+	assert.Equal(t, res.Choices[0].Message.Content, "{\"symbols\": [\"Go\", \"ChatMessage\", \"Any\", \"FunctionCall\", \"ToolCall\", \"ToolResponse\"]}")
 }
 
 func TestChatStream(t *testing.T) {
@@ -309,7 +334,7 @@ func TestChatStreamJsonMode(t *testing.T) {
 	params.Temperature = 0
 	params.ResponseFormat = ResponseFormatJsonObject
 	resChan, err := client.ChatStream(
-		ModelMistralSmallLatest,
+		ModelOpenMixtral8x22b,
 		[]ChatMessage{
 			{
 				Role: RoleUser,
@@ -347,6 +372,6 @@ func TestChatStreamJsonMode(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, totalOutput, "{\"symbols\": [\"Go\", \"ChatMessage\", \"FunctionCall\", \"ToolCall\"]}")
+	assert.Equal(t, totalOutput, "{\"symbols\": [\"Go\", \"ChatMessage\", \"Any\", \"FunctionCall\", \"ToolCall\", \"ToolResponse\"]}")
 	assert.Nil(t, functionCall)
 }

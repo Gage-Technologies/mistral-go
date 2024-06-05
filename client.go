@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,6 +13,7 @@ import (
 
 const (
 	Endpoint          = "https://api.mistral.ai"
+	CodestralEndpoint = "https://codestral.mistral.ai"
 	DefaultMaxRetries = 5
 	DefaultTimeout    = 120 * time.Second
 )
@@ -54,12 +55,22 @@ func NewMistralClient(apiKey string, endpoint string, maxRetries int, timeout ti
 	}
 }
 
+// NewMistralClientDefault creates a new Mistral API client with the default endpoint and the given API key. Defaults to using MISTRAL_API_KEY from the environment.
 func NewMistralClientDefault(apiKey string) *MistralClient {
 	if apiKey == "" {
 		apiKey = os.Getenv("MISTRAL_API_KEY")
 	}
 
 	return NewMistralClient(apiKey, Endpoint, DefaultMaxRetries, DefaultTimeout)
+}
+
+// NewCodestralClientDefault creates a new Codestral API client with the default endpoint and the given API key. Defaults to using CODESTRAL_API_KEY from the environment.
+func NewCodestralClientDefault(apiKey string) *MistralClient {
+	if apiKey == "" {
+		apiKey = os.Getenv("CODESTRAL_API_KEY")
+	}
+
+	return NewMistralClient(apiKey, CodestralEndpoint, DefaultMaxRetries, DefaultTimeout)
 }
 
 func (c *MistralClient) request(method string, jsonData map[string]interface{}, path string, stream bool, params map[string]string) (interface{}, error) {
@@ -98,7 +109,7 @@ func (c *MistralClient) request(method string, jsonData map[string]interface{}, 
 	}
 
 	if resp.StatusCode >= 400 {
-		responseBytes, _ := ioutil.ReadAll(resp.Body)
+		responseBytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("(HTTP Error %d) %s", resp.StatusCode, string(responseBytes))
 	}
 
@@ -107,7 +118,7 @@ func (c *MistralClient) request(method string, jsonData map[string]interface{}, 
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
